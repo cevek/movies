@@ -20,8 +20,7 @@ export function createPlayer(dom: string | HTMLElement, options: any) {
 
 
 import * as React from 'react';
-import { Sub } from "./Sub";
-
+type Sub = any;
 interface PlayerProps {
     subtitles: Sub[];
     videoId: string;

@@ -1,30 +1,40 @@
 import {
-    getAttr, getAttrOrNull, getNode, getNodeList, getNodeOrNull, getRegexpValue,
+    getAttr,
+    getAttrOrNull,
+    getNode,
+    getNodeList,
+    getNodeOrNull,
+    getRegexpValue,
     getText
 } from '../../parsers-lib/dom-helpers';
 import {getHTML, getUrl, setCacheDir} from '../../parsers-lib/requester';
 import {query} from '../db';
 async function main() {
     await query('truncate table movies');
-    for (let i = 1; i <= 33; i++) {
-        await getPage(i);
+    for (let i = 1; i <= 100; i++) {
+        if (await getPage('movies', i) === false) break;
+    }
+    for (let i = 1; i <= 100; i++) {
+        if (await getPage('mults', i) === false) break;
     }
 }
 
-async function getPage(page: number) {
-    const doc = await getHTML(`https://voriginale.tv/movies/page${page}/`, {
+async function getPage(type: string, page: number) {
+    const doc = await getHTML(`https://voriginale.tv/${type}/page${page}/`, {
         requestOptions: {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
             }
         }
     });
+    if (getText(doc, '.preview__list') === 'Ничего не найдено') return false;
     const list = getNodeList(doc, '.preview__movie');
     for (let i = 0; i < list.length; i++) {
         const movieItem = list[i];
         const id = getRegexpValue(getAttr(getNode(movieItem, 'a.preview__link'), 'href'), /\/([^/]+)\/$/);
         await getMovie(id);
     }
+    return true;
 }
 
 async function getMovie(extId: string) {
@@ -45,12 +55,11 @@ async function getMovie(extId: string) {
     );
 }
 
-async function getSub(url: string){
+async function getSub(url: string) {
     const srt = await getUrl(url);
     const sub = srt.replace(/<[^>]+>/g, '');
     return sub;
 }
-
 
 
 setCacheDir(__dirname + '/cache/');

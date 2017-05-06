@@ -9,4 +9,6 @@ export interface IMovies {
     coverUrl: string;
     enSubUrl: string;
     ruSubUrl: string;
+    enSubs: string;
+    ruSubs: string;
 }

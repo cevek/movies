@@ -16,18 +16,17 @@ router.get('/api/movies/', async ctx => {
 });
 
 router.get('/api/movie/:id/', async ctx => {
-    ctx.body = (await query<IMovies[]>('SELECT * FROM movies WHERE id=?', [ctx.params.id]))[0];
+    ctx.body = (await query<IMovies[]>('SELECT * FROM movies WHERE id=? AND enSubs IS NOT NULL AND ruSubs IS NOT NULL', [ctx.params.id]))[0];
 });
 
 packer.run({watch: true});
 app.use(router.routes());
 app.use(router.allowedMethods());
 
-const index = readFileSync(packer.options.dest + '/index.html', 'utf-8');
 app.use(async (ctx, next) => {
     await next();
     if (ctx.status === 404) {
-        ctx.body = index;
+        ctx.body = readFileSync(packer.options.dest + '/index.html', 'utf-8');
         ctx.status = 200;
     }
 });

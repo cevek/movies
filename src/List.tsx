@@ -19,7 +19,7 @@ export class List extends React.Component<ListProps, {}> {
         const {movies} = this.props;
         return (
             <div className="list">
-                {movies.slice(0, 10).map(movie =>
+                {movies.map(movie =>
                     <Link key={movie.id} className="list__movie" url={routes.movie.toUrl({id: movie.id})}>
                         <img className="list__cover" src={movie.coverUrl} alt=""/>
                         <div className="list__title">{movie.title}</div>
