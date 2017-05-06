@@ -1,0 +1,24 @@
+{
+  "name": "voriginale",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/koa": "^2.0.39",
+    "@types/koa-router": "^7.0.22",
+    "@types/react": "^15.0.24",
+    "@types/react-dom": "^15.5.0",
+    "koa": "^2.2.0",
+    "koa-router": "^7.1.1",
+    "koa-static": "^3.0.0",
+    "react": "^15.5.4",
+    "react-dom": "^15.5.4",
+    "webbuilder": "^1.0.26"
+  }
+}

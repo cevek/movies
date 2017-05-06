@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .list__movie {
+            display: inline-block;
+            text-align: center;
+            width: 200px;
+            vertical-align: top;
+        }
+
+        .list__cover {
+            width: 200px;
+            height: 272px;
+        }
+        
+        .selected {
+            background: skyblue;
+            color: black;
+        }
+        
+        .video {
+            position: fixed;
+            left: 0;
+            top: 0;
+            /*top: 50%;*/
+            /*transform: translateY(-70%);*/
+        }
+        .overlay {
+            background: rgba(0,0,0,0.7);
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 40px;
+            right: 0;
+        }
+        .subtitles {
+            position: fixed;
+            background: rgba(0,0,0,0.7);
+            text-align: center;
+            top: 0;
+            bottom: 40px;
+            left: 0;
+            right: 0;
+            line-height: 2;
+            color: white;
+            overflow: auto;
+
+        }
+        .subtitles .sub {
+            margin: auto;
+            width: 500px;
+        }
+    </style>
+    <%-css%>
+</head>
+
+<body>
+    <div id="root"></div>
+    <%-js%>
+</body>
+
+</html>
