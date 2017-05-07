@@ -100,8 +100,8 @@ export function removeInAudiables(subs: Sub[]) {
     const newSubs:Sub[] = [];
     for (let i = 0; i < subs.length; i++) {
         const sub = subs[i];
-        sub.text = sub.text.replace(/[\-–—]?\s*\([A-ZА-Я\d\W]+\)/, '').trim();
-        sub.text = sub.text.replace(/[A-ZА-Я\d\W]{3,}:/, '').trim();
+        sub.text = sub.text.replace(/[\-–—]?\s*\([A-ZА-Я\d\W]+\)/g, '').trim();
+        sub.text = sub.text.replace(/[A-ZА-Я\d\W]{3,}:/g, '').trim();
         if (sub.text) {
             newSubs.push(sub);
         }

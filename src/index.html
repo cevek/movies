@@ -21,60 +21,31 @@
             height: 272px;
         }
 
-        .movie__sub {
-            margin: 10px;
+        .player__video {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 800px;
         }
 
-        .movie__sub_en {
+        .sub {
+            width: 400px;
+            padding: 10px;
+        }
+
+        .sub__en {
             white-space: pre;
         }
 
-        .movie__sub_ru {
+        .sub__ru {
             white-space: pre;
             font-size: 10px;
-            color: rgba(0,0,0,0.3);
+            color: rgba(0, 0, 0, 0.3);
+        }
+        .sub--selected {
+            background: beige;
         }
 
-        .selected {
-            background: skyblue;
-            color: black;
-        }
-
-        .video {
-            position: fixed;
-            left: 0;
-            top: 0;
-            /*top: 50%;*/
-            /*transform: translateY(-70%);*/
-        }
-
-        .overlay {
-            background: rgba(0, 0, 0, 0.7);
-            position: fixed;
-            left: 0;
-            top: 0;
-            bottom: 40px;
-            right: 0;
-        }
-
-        .subtitles {
-            position: fixed;
-            background: rgba(0, 0, 0, 0.7);
-            text-align: center;
-            top: 0;
-            bottom: 40px;
-            left: 0;
-            right: 0;
-            line-height: 2;
-            color: white;
-            overflow: auto;
-
-        }
-
-        .subtitles .sub {
-            margin: auto;
-            width: 500px;
-        }
     </style>
     <%-css%>
 </head>
