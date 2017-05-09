@@ -217,7 +217,7 @@ export class Subs extends React.Component<SubsProps, {}> {
         return -1;
     }
 
-    getCurrentPageIdx() {
+    get currentPageIdx() {
         const {playerData: {currentTime}} = this.props;
         for (let i = 0; i < this.pages.length; i++) {
             const page = this.pages[i];
@@ -228,27 +228,35 @@ export class Subs extends React.Component<SubsProps, {}> {
         return -1;
     }
 
-    @observable currentPageIdx = -1;
-
     componentDidMount() {
         document.addEventListener('keypress', this.onKeyPress);
         document.addEventListener('keydown', this.onKeyPress);
         this.makePages();
         this.forceUpdate();
-        //todo: destroy
-        autorun(() => {
-            const currentPageIdx = this.getCurrentPageIdx();
-            if (currentPageIdx !== this.currentPageIdx) {
-                this.currentPageIdx = currentPageIdx;
-                this.setPage(currentPageIdx);
-            }
-        });
+        this.autoScrollPageDisposer = autorun(this.autoScrollPage);
     }
 
-    setPage(idx: number) {
-        const page = this.pages[idx];
-        window.scrollTo(0, page.top);
+
+    componentWillUnmount() {
+        document.removeEventListener('keypress', this.onKeyPress);
+        document.removeEventListener('keydown', this.onKeyPress);
+        this.autoScrollPageDisposer();
     }
+
+
+    autoScrollPageDisposer: ()=>void;
+
+    prevCurrentPageIdx: number;
+    autoScrollPage = () => {
+        const currentPageIdx = this.currentPageIdx;
+        if (this.prevCurrentPageIdx !== currentPageIdx) {
+            this.prevCurrentPageIdx = currentPageIdx;
+            const page = this.pages[currentPageIdx];
+            if (page) {
+                window.scrollTo(0, page.top);
+            }
+        }
+    };
 
 
     @computed get pageProgress() {
@@ -262,11 +270,6 @@ export class Subs extends React.Component<SubsProps, {}> {
         return currentTimeForCurrentPage / pageDur;
     }
 
-
-    componentWillUnmount() {
-        document.removeEventListener('keypress', this.onKeyPress);
-        document.removeEventListener('keydown', this.onKeyPress);
-    }
 
     pages: SubsPage[] = [];
 
