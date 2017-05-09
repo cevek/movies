@@ -21,7 +21,7 @@ export function parseSubs(srt: string) {
             text: res[9],
         });
     }
-    console.log(result);
+    // console.log(result);
     return result;
 }
 
