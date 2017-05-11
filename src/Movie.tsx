@@ -23,40 +23,95 @@ const enum Key {
     SPACE = 32
 }
 
+function saveLocalStorage(key: string, value: any) {
+    try {
+        return localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+function readLocalStorage(key: string):any {
+    try {
+        return JSON.parse(localStorage.getItem(key) || 'null');
+    } catch (e) {
+        console.error(e);
+        return null;
+    }
+}
+
 export class Movie extends React.Component<MovieProps, {}> {
     static onEnter(props: MovieProps) {
         return FastPromise.resolve(fetch(`/api/movie/${props.params.id}`).then<IMovies>(response => response.json()).then(movie => {
             props.movie = movie;
             if (movie.enSubs && movie.ruSubs) {
-                let enSubs = parseSubs(movie.enSubs);
-                enSubs = removeInAudiables(enSubs);
-                const ruSubs = parseSubs(movie.ruSubs);
-                splitNewLines(ruSubs);
-                props.mergedSubs = mergeSubs(enSubs, ruSubs);
+                props.mergedSubs = Movie.makeMergedSubs(movie, 0);
                 // console.log(props);
             }
             else props.mergedSubs = [];
         }));
     }
 
-    playerData = new PlayerData(this.props.movie.id + '');
+    ruShift = readLocalStorage(this.props.movie.id + '_rushift');
+    mergedSubs = this.props.mergedSubs;
+
+    static makeMergedSubs(movie: IMovies, ruShift: number) {
+        let enSubs = parseSubs(movie.enSubs);
+        enSubs = removeInAudiables(enSubs);
+        const ruSubs = parseSubs(movie.ruSubs);
+        splitNewLines(ruSubs);
+        return mergeSubs(enSubs, ruSubs, ruShift);
+    }
+
+    componentDidMount() {
+        document.addEventListener('keydown', this.onKeyPress);
+    }
+
 
     componentWillUnmount() {
         this.playerData.destroy();
+        document.removeEventListener('keydown', this.onKeyPress);
     }
+
+    onKeyPress = (e: KeyboardEvent) => {
+        let handled = false;
+        if (e.shiftKey) {
+            switch (e.keyCode) {
+                case Key.UP: {
+                    this.ruShift -= .2;
+                    handled = true;
+                    break;
+                }
+                case Key.DOWN: {
+                    this.ruShift += .2;
+                    handled = true;
+                    break;
+                }
+            }
+        }
+        if (handled) {
+            saveLocalStorage(this.props.movie.id + '_rushift', this.ruShift);
+            this.mergedSubs = Movie.makeMergedSubs(this.props.movie, this.ruShift);
+            e.preventDefault();
+            this.forceUpdate();
+        }
+    };
+
+    playerData = new PlayerData(this.props.movie.id + '');
+
 
     makeFullScreen = () => {
         document.documentElement.webkitRequestFullscreen();
     };
 
     render() {
-        const {movie, mergedSubs} = this.props;
+        const {movie} = this.props;
         return (
             <div className="movie">
                 <div onClick={this.makeFullScreen} className="movie__fullscreen">FullScreen</div>
                 <h1>{movie.title}</h1>
                 <Player movie={movie} playerData={this.playerData}/>
-                <Subs mergedSubs={mergedSubs} playerData={this.playerData}/>
+                <Subs mergedSubs={this.mergedSubs} playerData={this.playerData}/>
             </div>
         );
     }
@@ -133,21 +188,11 @@ class PlayerData {
     }
 
     loadCurrentTime() {
-        try {
-            const time = localStorage.getItem(this.uniqueId + '_time');
-            if (time && Number.isFinite(+time)) {
-                return +time;
-            }
-        } catch (e) {}
-        return 0;
+        return readLocalStorage(this.uniqueId + '_time') || 0;
     }
 
     saveCurrentTime() {
-        try {
-            localStorage.setItem(this.uniqueId + '_time', this.currentTime + '');
-        } catch (e) {
-            console.error(e);
-        }
+        return saveLocalStorage(this.uniqueId + '_time', this.currentTime);
     }
 
     playPause() {
@@ -244,7 +289,7 @@ export class Subs extends React.Component<SubsProps, {}> {
     }
 
 
-    autoScrollPageDisposer: ()=>void;
+    autoScrollPageDisposer: () => void;
 
     prevCurrentPageIdx: number;
     autoScrollPage = () => {
@@ -326,8 +371,8 @@ export class Subs extends React.Component<SubsProps, {}> {
             }
             pages.push({top: prevPageBottom, bottom: pageBottom, startTime: prevEndTime, endTime: endTime});
         }
-        console.log(splits);
-        console.log(pages);
+        // console.log(splits);
+        // console.log(pages);
         this.pages = pages;
     }
 

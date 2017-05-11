@@ -97,7 +97,7 @@ export function mergeSubs(en: Sub[], ru: Sub[], ruShift = 0) {
     let skipped = 0;
     for (let i = 0; i < ru.length; i++) {
         const ruSub = ru[i];
-        const ruSubMid = middle(ruSub);
+        const ruSubMid = middle(ruSub) + ruShift;
 
         let leftEnSub: Maybe<MergedSub> = null;
         let rightEnSub: Maybe<MergedSub> = null;
@@ -118,10 +118,10 @@ export function mergeSubs(en: Sub[], ru: Sub[], ruShift = 0) {
 
         const leftDiff = leftEnSub ? Math.abs(ruSubMid - middle(leftEnSub)) : Infinity;
         const rightDiff = rightEnSub ? Math.abs(ruSubMid - middle(rightEnSub)) : Infinity;
-        if (leftDiff < rightDiff && leftEnSub && leftEnSub.end + max > ruSub.start) {
+        if (leftDiff < rightDiff && leftEnSub && leftEnSub.end + max > ruSub.start + ruShift) {
             leftEnSub.ruText += ruSub.text + '\n';
             leftEnSub.ruSubs.push(ruSub);
-        } else if (leftDiff > rightDiff && rightEnSub && ruSub.end > rightEnSub.start - max) {
+        } else if (leftDiff > rightDiff && rightEnSub && ruSub.end + ruShift > rightEnSub.start - max) {
             rightEnSub.ruText += ruSub.text + '\n';
             rightEnSub.ruSubs.push(ruSub);
         } else {
