@@ -411,7 +411,7 @@ export class Sub extends React.Component<SubProps, {}> {
         return (
             <div onClick={this.playSub} data-start-time={sub.start} data-end-time={sub.end} style={{marginTop: top}}
                  className={`sub ${selected ? 'sub--selected' : ''}`}>
-                <div className="sub__en">{sub.enText}</div>
+                <div className="sub__en">{sub.text}</div>
                 <div className="sub__ru">{sub.ruText}</div>
             </div>
         );

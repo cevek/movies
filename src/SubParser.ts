@@ -6,7 +6,7 @@ export interface Sub {
 export interface MergedSub {
     start: number;
     end: number;
-    enText: string;
+    text: string;
     ruText: string;
     ruSubs: Sub[];
 }
@@ -25,10 +25,42 @@ export function parseSubs(srt: string) {
     return result;
 }
 
+function splitText(text: string) {
+    let startPos = 0;
+    let endPos = 0;
+    const newItems = [];
+    for (let j = 0; j < text.length; j++) {
+        const code = text.charCodeAt(j);
+        if (code === 46 || code === 13 || code === 10 || code === 8230) {
+            endPos = j + 1;
+            continue;
+        }
+        if ((code === 45 && j + 1 < text.length && text.charCodeAt(j + 1) === 32) || code === 8211 || code === 8212) {
+            endPos = j;
+            continue;
+        }
+        if (startPos + 2 < endPos) {
+            newItems.push(text.substring(startPos, endPos).trim());
+            startPos = endPos;
+        }
+    }
+    if (startPos < text.length) {
+        newItems.push(text.substring(startPos, text.length).trim());
+    }
+    return newItems;
+}
 export function splitNewLines(subs: Sub[]) {
     for (let i = 0; i < subs.length; i++) {
         const sub = subs[i];
-        const items = sub.text.split('\n');
+        const items = splitText(sub.text);
+        // const items = sub.text.split(/(\n|\.+|- |–|—)/);
+        // console.log(sub.text, items);
+        // for (let j = 0; j < items.length; j++) {
+        //     const item = items[j].trim();
+        //     if (item) {
+        //         newItems.push(item);
+        //     }
+        // }
         if (items.length > 1) {
             const dur = (sub.end - sub.start) / items.length;
             const start = sub.start;
@@ -42,47 +74,63 @@ export function splitNewLines(subs: Sub[]) {
     }
 }
 
+// -----1111----1111-----111-----1111111-
+// ----111---111-111-11---11--1---11-11--
+
+function middle(sub: Sub) {
+    return sub.start + (sub.end - sub.start) / 2;
+}
 
 export function mergeSubs(en: Sub[], ru: Sub[], ruShift = 0) {
     let j = 0;
     const resultSub: MergedSub[] = en.map(sub => ({
         start: sub.start,
         end: sub.end,
-        enText: sub.text,
+        text: sub.text,
         ruText: '',
         ruSubs: []
     }));
-    // console.log(resultSub);
-    for (let k = 0; k < 2; k += .5) {
-        let lastJ = 1;
-        for (let i = 0; i < en.length; i++) {
-            const enSub = en[i];
-            j = lastJ;
-            let ruSub = ru[j];
-            while (ruSub && (ruSub.start + ruShift) < enSub.end + k) {
-                if (overlapPercent(enSub, ruSub, ruShift, k) > 30) {
-                    resultSub[i].ruSubs.push(ruSub);
-                    ru.splice(j, 1);
-                    j--;
-                    lastJ = j;
-                }
-                if (enSub.start - ruSub.start > 10) {
-                    lastJ = j;
-                }
-                j++;
-                ruSub = ru[j];
+
+    const max = 2;
+
+    let lastEnSubK = 0;
+    let skipped = 0;
+    for (let i = 0; i < ru.length; i++) {
+        const ruSub = ru[i];
+        const ruSubMid = middle(ruSub);
+
+        let leftEnSub: Maybe<MergedSub> = null;
+        let rightEnSub: Maybe<MergedSub> = null;
+
+
+        for (let k = lastEnSubK; k < resultSub.length; k++) {
+            const sub = resultSub[k];
+            const subMid = middle(sub);
+            if (subMid < ruSubMid) {
+                leftEnSub = sub;
+                lastEnSubK = k;
+            } else {
+                rightEnSub = sub;
+                break;
             }
         }
-    }
-    for (let i = 0; i < resultSub.length; i++) {
-        const sub = resultSub[i];
-        sub.ruSubs.sort(sortSub);
-        for (let k = 0; k < sub.ruSubs.length; k++) {
-            const ruSub = sub.ruSubs[k];
-            sub.ruText += (k > 0 ? '\n' : '') + ruSub.text;
+
+
+        const leftDiff = leftEnSub ? Math.abs(ruSubMid - middle(leftEnSub)) : Infinity;
+        const rightDiff = rightEnSub ? Math.abs(ruSubMid - middle(rightEnSub)) : Infinity;
+        if (leftDiff < rightDiff && leftEnSub && leftEnSub.end + max > ruSub.start) {
+            leftEnSub.ruText += ruSub.text + '\n';
+            leftEnSub.ruSubs.push(ruSub);
+        } else if (leftDiff > rightDiff && rightEnSub && ruSub.end > rightEnSub.start - max) {
+            rightEnSub.ruText += ruSub.text + '\n';
+            rightEnSub.ruSubs.push(ruSub);
+        } else {
+            // console.log(ruSub, leftEnSub, rightEnSub);
+            skipped++;
         }
     }
-    console.log(`Skipped count: ${ru.length}`);
+    // console.log(resultSub);
+    console.log(`Skipped count: ${skipped}`);
     return resultSub;
 }
 
@@ -97,7 +145,7 @@ function overlapPercent(en: Sub, ru: Sub, ruShift: number, spreadSec: number) {
     return (end - start) / (ru.end - ru.start + spreadSec * 2) * 100 | 0;
 }
 export function removeInAudiables(subs: Sub[]) {
-    const newSubs:Sub[] = [];
+    const newSubs: Sub[] = [];
     for (let i = 0; i < subs.length; i++) {
         const sub = subs[i];
         sub.text = sub.text.replace(/[\-–—]?\s*\([A-ZА-Я\d\W]+\)/g, '').trim();
