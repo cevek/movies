@@ -12,11 +12,11 @@ const packer = createPackerInstance();
 const router = new Router();
 
 router.get('/api/movies/', async ctx => {
-    ctx.body = await query<IMovies[]>('SELECT id, title, coverUrl FROM movies');
+    ctx.body = await query<IMovies[]>('SELECT id, title, coverUrl FROM movies WHERE enSubs IS NOT NULL AND ruSubs IS NOT NULL');
 });
 
 router.get('/api/movie/:id/', async ctx => {
-    ctx.body = (await query<IMovies[]>('SELECT * FROM movies WHERE id=? AND enSubs IS NOT NULL AND ruSubs IS NOT NULL', [ctx.params.id]))[0];
+    ctx.body = (await query<IMovies[]>('SELECT * FROM movies WHERE id=?', [ctx.params.id]))[0];
 });
 
 packer.run({watch: true});
