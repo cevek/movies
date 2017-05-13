@@ -25,17 +25,29 @@ export function parseSubs(srt: string) {
     return result;
 }
 
+const enum Symbols  {
+    NEWLINE = 10,
+    NEWRLINE = 13,
+    EXCLAMATORY_MARK = 33,
+    QUESTION_MARK = 63,
+    DOT = 46,
+    MULTIDOTS = 8230,
+    SPACE = 32,
+    HYPHEN = 45,
+    SHORT_DASH = 8211,
+    LONG_DASH = 8212,
+}
 function splitText(text: string) {
     let startPos = 0;
     let endPos = 0;
     const newItems = [];
     for (let j = 0; j < text.length; j++) {
         const code = text.charCodeAt(j);
-        if (code === 46 || code === 13 || code === 10 || code === 8230) {
+        if (code === Symbols.DOT || code === Symbols.EXCLAMATORY_MARK || code === Symbols.QUESTION_MARK || code === Symbols.NEWRLINE || code === Symbols.NEWLINE || code === Symbols.MULTIDOTS) {
             endPos = j + 1;
             continue;
         }
-        if ((code === 45 && j + 1 < text.length && text.charCodeAt(j + 1) === 32) || code === 8211 || code === 8212) {
+        if ((code === Symbols.HYPHEN && j + 1 < text.length && text.charCodeAt(j + 1) === Symbols.SPACE) || code === Symbols.SHORT_DASH || code === Symbols.LONG_DASH) {
             endPos = j;
             continue;
         }
