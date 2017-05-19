@@ -16,11 +16,15 @@ export interface MovieProps extends RouteProps {
 }
 
 const enum Key {
+    ENTER = 13,
     UP = 38,
     DOWN = 40,
     LEFT = 37,
     RIGHT = 39,
-    SPACE = 32
+    SPACE = 32,
+    R = 82,
+    E = 69,
+    S = 83,
 }
 
 function saveLocalStorage(key: string, value: any) {
@@ -58,8 +62,8 @@ export class Movie extends React.Component<MovieProps, {}> {
     static makeMergedSubs(movie: IMovies, ruShift: number) {
         let enSubs = parseSubs(movie.enSubs);
         enSubs = removeInAudiables(enSubs);
-        const ruSubs = parseSubs(movie.ruSubs);
-        splitNewLines(ruSubs);
+        let ruSubs = parseSubs(movie.ruSubs);
+        ruSubs = splitNewLines(ruSubs);
         return mergeSubs(enSubs, ruSubs, ruShift);
     }
 
@@ -87,6 +91,11 @@ export class Movie extends React.Component<MovieProps, {}> {
                     handled = true;
                     break;
                 }
+                case Key.ENTER: {
+                    this.toogleFullScreen();
+                    handled = true;
+                    break;
+                }
             }
         }
         if (handled) {
@@ -99,16 +108,19 @@ export class Movie extends React.Component<MovieProps, {}> {
 
     playerData = new PlayerData(this.props.movie.id + '');
 
-
-    makeFullScreen = () => {
-        document.documentElement.webkitRequestFullscreen();
+    toogleFullScreen = () => {
+        if (document.webkitIsFullScreen) {
+            document.webkitExitFullscreen();
+        } else {
+            document.documentElement.webkitRequestFullscreen();
+        }
     };
 
     render() {
         const {movie} = this.props;
         return (
             <div className="movie">
-                <div onClick={this.makeFullScreen} className="movie__fullscreen">FullScreen</div>
+                <div onClick={this.toogleFullScreen} className="movie__fullscreen">FullScreen</div>
                 <h1>{movie.title}</h1>
                 <Player movie={movie} playerData={this.playerData}/>
                 <Subs mergedSubs={this.mergedSubs} playerData={this.playerData}/>
@@ -267,13 +279,19 @@ export class Subs extends React.Component<SubsProps, {}> {
         for (let i = 0; i < this.pages.length; i++) {
             const page = this.pages[i];
             if (page.startTime <= currentTime && currentTime < page.endTime) {
+                // console.log('page', i);
                 return i;
             }
         }
         return -1;
     }
 
+    onResize = () => {
+        this.makePages();
+    };
+
     componentDidMount() {
+        window.addEventListener('resize', this.onResize);
         document.addEventListener('keypress', this.onKeyPress);
         document.addEventListener('keydown', this.onKeyPress);
         this.makePages();
@@ -283,6 +301,7 @@ export class Subs extends React.Component<SubsProps, {}> {
 
 
     componentWillUnmount() {
+        window.removeEventListener('resize', this.onResize);
         document.removeEventListener('keypress', this.onKeyPress);
         document.removeEventListener('keydown', this.onKeyPress);
         this.autoScrollPageDisposer();
@@ -319,19 +338,20 @@ export class Subs extends React.Component<SubsProps, {}> {
     pages: SubsPage[] = [];
 
     makePages() {
-        const averagePageSize = window.innerHeight;
+        const averagePageSize = window.innerHeight - 20;
         const windowSize = 100;
         const windowHalfSize = windowSize / 2;
         const root = (this.refs.root as HTMLElement);
         const allHeight = document.body.scrollHeight;
         const splits: SubSplit[] = [];
         const subsNodes = root.querySelectorAll('.sub');
+        const scrollTop = document.body.scrollTop;
         for (let i = 0; i < subsNodes.length; i++) {
             const node = subsNodes[i];
             const rect = node.getBoundingClientRect();
             const startTime = +(node.getAttribute('data-start-time') || 0);
             const endTime = +(node.getAttribute('data-end-time') || 0);
-            splits.push({time: startTime, pos: rect.top}, {time: endTime, pos: rect.bottom});
+            splits.push({time: startTime, pos: rect.top + scrollTop}, {time: endTime, pos: rect.bottom + scrollTop});
         }
         let pageBottom = 0;
         let endTime = 0;
@@ -376,10 +396,14 @@ export class Subs extends React.Component<SubsProps, {}> {
         this.pages = pages;
     }
 
+    @observable showRuSubs = true;
+    @observable showSubs = true;
+
     onKeyPress = (e: KeyboardEvent) => {
         const {mergedSubs, playerData} = this.props;
         const {currentTime} = playerData;
         let handled = false;
+        const noMetaKey = !e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey;
         switch (e.keyCode) {
             case Key.SPACE: {
                 playerData.playPause();
@@ -402,6 +426,20 @@ export class Subs extends React.Component<SubsProps, {}> {
                 handled = true;
                 break;
             }
+            case Key.R: {
+                if (noMetaKey) {
+                    this.showRuSubs = !this.showRuSubs;
+                    handled = true;
+                }
+                break;
+            }
+            case Key.S: {
+                if (noMetaKey) {
+                    this.showSubs = !this.showSubs;
+                    handled = true;
+                }
+                break;
+            }
         }
         if (handled) {
             e.preventDefault();
@@ -420,7 +458,7 @@ export class Subs extends React.Component<SubsProps, {}> {
     render() {
         const {mergedSubs, playerData} = this.props;
         return (
-            <div className="subs" ref="root">
+            <div className={`subs ${this.showSubs ? '' : 'subs--hidden'} ${this.showRuSubs ? '' : 'subs--ru-hidden'}`} ref="root">
                 <div className="subs__wrapper">
                     {mergedSubs.map((sub, i) =>
                         <Sub key={i} top={this.getDistance(i)} sub={sub} playerData={playerData}
