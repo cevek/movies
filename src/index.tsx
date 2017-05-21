@@ -4,11 +4,13 @@ import { App } from './App';
 import {List} from './List';
 import {Movie} from './Movie';
 import {Router, BrowserHistory, Route, RouterView} from 'router';
+import {Phrases} from './Phrases';
 
 export namespace routes {
     export const index = new Route('/', App);
     export const list = index.addIndex(List as any);
     export const movie = index.addChild('movie/:id', Movie as any);
+    export const phrases = index.addChild('phrases/:id', Phrases as any);
 }
 
 const history = new BrowserHistory();
