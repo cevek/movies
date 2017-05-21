@@ -19,6 +19,7 @@
     "koa-static": "^3.0.0",
     "mobx": "^3.1.9",
     "mobx-react": "^4.1.8",
+    "pos": "^0.4.2",
     "react": "^15.5.4",
     "react-dom": "^15.5.4",
     "webbuilder": "^1.0.26"
