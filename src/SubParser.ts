@@ -18,7 +18,7 @@ export function parseSubs(srt: string) {
         result.push({
             start: +res[1] * 3600 + +res[2] * 60 + +res[3] + +res[4] / 1000,
             end: +res[5] * 3600 + +res[6] * 60 + +res[7] + +res[8] / 1000,
-            text: res[9],
+            text: res[9] + '\n',
         });
     }
     // console.log(result);
@@ -31,6 +31,7 @@ const enum Symbols  {
     EXCLAMATORY_MARK = 33,
     QUESTION_MARK = 63,
     DOT = 46,
+    COMMA = 44,
     MULTIDOTS = 8230,
     SPACE = 32,
     HYPHEN = 45,
@@ -43,7 +44,7 @@ function splitText(text: string) {
     const newItems = [];
     for (let j = 0; j < text.length; j++) {
         const code = text.charCodeAt(j);
-        if (code === Symbols.DOT || code === Symbols.EXCLAMATORY_MARK || code === Symbols.QUESTION_MARK || code === Symbols.NEWRLINE || code === Symbols.NEWLINE || code === Symbols.MULTIDOTS) {
+        if (code === Symbols.DOT/* || code === Symbols.COMMA*/ || code === Symbols.EXCLAMATORY_MARK || code === Symbols.QUESTION_MARK || code === Symbols.NEWRLINE || code === Symbols.NEWLINE || code === Symbols.MULTIDOTS) {
             endPos = j + 1;
             continue;
         }
@@ -52,38 +53,43 @@ function splitText(text: string) {
             continue;
         }
         if (startPos + 2 < endPos) {
-            newItems.push(text.substring(startPos, endPos).trim());
+            newItems.push(text.substring(startPos, endPos));
             startPos = endPos;
         }
     }
     if (startPos < text.length) {
-        newItems.push(text.substring(startPos, text.length).trim());
+        newItems.push(text.substring(startPos, text.length));
     }
     return newItems;
 }
+
+
+function countVowels(s: string) {
+    const r = /[уеыаоэяиюёeyuioa]/ig;
+    let count = 0;
+    while(r.test(s)) count++;
+    return count;
+}
 export function splitNewLines(subs: Sub[]) {
+    const newSubs:Sub[] = [];
     for (let i = 0; i < subs.length; i++) {
         const sub = subs[i];
         const items = splitText(sub.text);
-        // const items = sub.text.split(/(\n|\.+|- |–|—)/);
-        // console.log(sub.text, items);
-        // for (let j = 0; j < items.length; j++) {
-        //     const item = items[j].trim();
-        //     if (item) {
-        //         newItems.push(item);
-        //     }
-        // }
+        const vowelsCount = countVowels(sub.text);
+        const timePerVowel = (sub.end - sub.start) / vowelsCount;
         if (items.length > 1) {
-            const dur = (sub.end - sub.start) / items.length;
-            const start = sub.start;
-            subs.splice(i, 1);
+            let start = sub.start;
             for (let j = 0; j < items.length; j++) {
                 const item = items[j];
-                subs.splice(i + j, 0, {start: start + dur * j, end: start + dur * (j + 1), text: item});
+                const dur = timePerVowel * countVowels(item);
+                newSubs.push({start: start, end: start + dur, text: item});
+                start += dur;
             }
-            i += items.length - 1;
+        } else {
+            newSubs.push(sub);
         }
     }
+    return newSubs;
 }
 
 // -----1111----1111-----111-----1111111-
@@ -131,10 +137,10 @@ export function mergeSubs(en: Sub[], ru: Sub[], ruShift = 0) {
         const leftDiff = leftEnSub ? Math.abs(ruSubMid - middle(leftEnSub)) : Infinity;
         const rightDiff = rightEnSub ? Math.abs(ruSubMid - middle(rightEnSub)) : Infinity;
         if (leftDiff < rightDiff && leftEnSub && leftEnSub.end + max > ruSub.start + ruShift) {
-            leftEnSub.ruText += ruSub.text + '\n';
+            leftEnSub.ruText += ruSub.text;
             leftEnSub.ruSubs.push(ruSub);
         } else if (leftDiff > rightDiff && rightEnSub && ruSub.end + ruShift > rightEnSub.start - max) {
-            rightEnSub.ruText += ruSub.text + '\n';
+            rightEnSub.ruText += ruSub.text;
             rightEnSub.ruSubs.push(ruSub);
         } else {
             // console.log(ruSub, leftEnSub, rightEnSub);
