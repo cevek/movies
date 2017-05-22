@@ -187,7 +187,7 @@ const enum PlayerState {
 class PlayerData {
     @observable currentTime = 0;
     element: HTMLVideoElement;
-    state = PlayerState.STOPPED;
+    @observable state = PlayerState.STOPPED;
 
     constructor(private movieConfig: MovieConfig) {}
 
@@ -268,16 +268,20 @@ export interface PlayerProps {
     playerData: PlayerData;
 }
 
+
+@observer
 export class Player extends React.Component<PlayerProps, {}> {
     componentDidMount() {
         this.props.playerData.init(this.refs.video as HTMLVideoElement);
     }
 
     render() {
-        const {movie} = this.props;
+        const {movie, playerData: {state}} = this.props;
+        const isPaused = state === PlayerState.STOPPED;
         return (
-            <div className="player">
+            <div className={`player ${isPaused ? 'player--paused' : ''}`}>
                 <video ref="video" className="player__video" src={movie.videoUrl}/>
+                <div className="player__overlay"/>
             </div>
         );
     }
@@ -462,7 +466,7 @@ export class Subs extends React.Component<SubsProps, {}> {
     }
 
     setHeroToCurrentSub(heroNum: number) {
-        const {mergedSubs, movieConfig} = this.props;
+        const {mergedSubs, playerData, movieConfig} = this.props;
         const idx = this.getCurrentSubIdx();
         if (idx > -1) {
             const configSub = movieConfig.subs.get(idx + '');
@@ -474,6 +478,9 @@ export class Subs extends React.Component<SubsProps, {}> {
                 }
             } else {
                 movieConfig.subs.set(idx + '', new MovieConfigSub({idx, hero: heroNum, newScene: false}));
+            }
+            if (mergedSubs.length > idx + 1) {
+                playerData.seek(mergedSubs[idx + 1].start);
             }
         }
     }
