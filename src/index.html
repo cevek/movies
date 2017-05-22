@@ -43,6 +43,10 @@
             /*font-weight: bold;*/
         }
 
+        .subs--paused .sub{
+            opacity: 0.99;
+        }
+
         .subs__wrapper {
             position: absolute;
             left: 50%;
@@ -82,7 +86,40 @@
             padding: 11px;
             margin: 0 auto;
             color: white;
+            opacity: .5;
+            border-top: 2px solid transparent;
         }
+
+        .sub--hero:before {
+            content: " ";
+            position: absolute;
+            display: block;
+            width: 20px;
+            height: 20px;
+            margin: 10px 0 0 -30px;
+            border-radius: 100%;
+        }
+
+        .sub--hero1:before {
+            background: #014d90;
+        }
+
+        .sub--hero2:before {
+            background: #006050;
+        }
+
+        .sub--hero3:before {
+            background: #3e515b;
+        }
+
+        .sub--hero4:before {
+            background: #5a3732;
+        }
+
+        .sub--new-scene {
+            border-color: silver;
+        }
+
 
         .subs--ru-hidden .sub__ru {
             visibility: hidden;
@@ -100,12 +137,11 @@
             /*-webkit-text-stroke: 1px black;*/
             white-space: pre-line;
             font-size: 30px;
-            text-shadow:
-                    2px 2px 0 #000,
-                    -1px -1px 0 #000,
-                    1px -1px 0 #000,
-                    -1px 1px 0 #000,
-                    1px 1px 0 #000;
+            text-shadow: 2px 2px 0 #000,
+            -1px -1px 0 #000,
+            1px -1px 0 #000,
+            -1px 1px 0 #000,
+            1px 1px 0 #000;
         }
 
         .sub__ru {
@@ -113,18 +149,17 @@
             font-size: 15px;
             -webkit-text-stroke: 0.4px black;
             color: white;
-            text-shadow:
-                    2px 2px 0 #000,
-                    -1px -1px 0 #000,
-                    1px -1px 0 #000,
-                    -1px 1px 0 #000,
-                    1px 1px 0 #000;
+            text-shadow: 2px 2px 0 #000,
+            -1px -1px 0 #000,
+            1px -1px 0 #000,
+            -1px 1px 0 #000,
+            1px 1px 0 #000;
         }
-
 
         .sub--selected {
             /*background: rgba(255, 255, 200, .2);*/
-            color: lightskyblue;;
+            color: lightskyblue;
+            opacity: 1;
         }
 
     </style>

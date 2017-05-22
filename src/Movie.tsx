@@ -25,9 +25,14 @@ const enum Key {
     R = 82,
     E = 69,
     S = 83,
+
+    V = 86,
+    C = 67,
+    X = 88,
+    Z = 90,
 }
 
-function saveLocalStorage(key: string, value: any) {
+function saveLocalStorage(key: string, value: {}) {
     try {
         return localStorage.setItem(key, JSON.stringify(value));
     } catch (e) {
@@ -35,12 +40,44 @@ function saveLocalStorage(key: string, value: any) {
     }
 }
 
-function readLocalStorage(key: string):any {
+function readLocalStorage(key: string): {} | null {
     try {
         return JSON.parse(localStorage.getItem(key) || 'null');
     } catch (e) {
         console.error(e);
         return null;
+    }
+}
+
+
+class MovieConfigSub {
+    idx: number;
+    @observable hero: Maybe<number> = null;
+    @observable newScene = false;
+
+    constructor(props: MovieConfigSub) {
+        this.idx = props.idx || 0;
+        this.hero = props.hero;
+        this.newScene = props.newScene || false;
+    }
+}
+
+class MovieConfig {
+    @observable currentTime = 0;
+    @observable ruShift = 0;
+    @observable showSubs = true;
+    @observable showRuSubs = true;
+    @observable subs = observable.map<MovieConfigSub>();
+
+    constructor(props: MovieConfig | null) {
+        if (!props) props = {} as MovieConfig;
+        this.currentTime = props.currentTime || 0;
+        this.ruShift = props.ruShift || 0;
+        this.showSubs = typeof props.showSubs === 'boolean' ? props.showSubs : true;
+        this.showRuSubs = typeof props.showRuSubs === 'boolean' ? props.showRuSubs : true;
+        for (const idx in props.subs) {
+            this.subs.set(idx, new MovieConfigSub((props.subs as any)[idx]));
+        }
     }
 }
 
@@ -56,8 +93,10 @@ export class Movie extends React.Component<MovieProps, {}> {
         }));
     }
 
-    ruShift = readLocalStorage(this.props.movie.id + '_rushift');
     mergedSubs = this.props.mergedSubs;
+    config = this.loadConfig();
+
+    // ruShift = readLocalStorage(this.props.movie.id + '_rushift');
 
     static makeMergedSubs(movie: IMovies, ruShift: number) {
         let enSubs = parseSubs(movie.enSubs);
@@ -77,17 +116,27 @@ export class Movie extends React.Component<MovieProps, {}> {
         document.removeEventListener('keydown', this.onKeyPress);
     }
 
+    loadConfig() {
+        const config = readLocalStorage(this.props.movie.id + '_config');
+        const movieConfig = new MovieConfig(config as MovieConfig);
+        autorun(() => {
+            saveLocalStorage(this.props.movie.id + '_config', movieConfig);
+        });
+        return movieConfig;
+    }
+
+
     onKeyPress = (e: KeyboardEvent) => {
         let handled = false;
         if (e.shiftKey) {
             switch (e.keyCode) {
                 case Key.UP: {
-                    this.ruShift -= .2;
+                    this.config.ruShift -= .2;
                     handled = true;
                     break;
                 }
                 case Key.DOWN: {
-                    this.ruShift += .2;
+                    this.config.ruShift += .2;
                     handled = true;
                     break;
                 }
@@ -98,15 +147,15 @@ export class Movie extends React.Component<MovieProps, {}> {
                 }
             }
         }
+
         if (handled) {
-            saveLocalStorage(this.props.movie.id + '_rushift', this.ruShift);
-            this.mergedSubs = Movie.makeMergedSubs(this.props.movie, this.ruShift);
+            this.mergedSubs = Movie.makeMergedSubs(this.props.movie, this.config.ruShift);
             e.preventDefault();
             this.forceUpdate();
         }
     };
 
-    playerData = new PlayerData(this.props.movie.id + '');
+    playerData = new PlayerData(this.config);
 
     toogleFullScreen = () => {
         if (document.webkitIsFullScreen) {
@@ -123,7 +172,7 @@ export class Movie extends React.Component<MovieProps, {}> {
                 <div onClick={this.toogleFullScreen} className="movie__fullscreen">FullScreen</div>
                 <h1>{movie.title}</h1>
                 <Player movie={movie} playerData={this.playerData}/>
-                <Subs mergedSubs={this.mergedSubs} playerData={this.playerData}/>
+                <Subs movieConfig={this.config} mergedSubs={this.mergedSubs} playerData={this.playerData}/>
             </div>
         );
     }
@@ -140,13 +189,13 @@ class PlayerData {
     element: HTMLVideoElement;
     state = PlayerState.STOPPED;
 
-    constructor(private uniqueId: string) {}
+    constructor(private movieConfig: MovieConfig) {}
 
     init(element: HTMLVideoElement) {
         this.element = element;
-        this.currentTime = this.loadCurrentTime();
+        this.currentTime = this.movieConfig.currentTime;
         this.element.currentTime = this.currentTime;
-        this.element.addEventListener('play', this.onPlay);
+        // this.element.addEventListener('play', this.onPlay);
         this.element.addEventListener('playing', this.onPlay);
         this.element.addEventListener('pause', this.onPause);
         this.element.addEventListener('seeking', this.updateCurrentTime);
@@ -154,7 +203,7 @@ class PlayerData {
     }
 
     destroy() {
-        this.element.removeEventListener('play', this.onPlay);
+        // this.element.removeEventListener('play', this.onPlay);
         this.element.removeEventListener('playing', this.onPlay);
         this.element.removeEventListener('pause', this.onPause);
         this.element.removeEventListener('seeking', this.updateCurrentTime);
@@ -184,7 +233,7 @@ class PlayerData {
         this.currentTime = this.element.currentTime;
         // save ~ every 2 sec
         if (Math.floor(Math.random() * 100) % 100 === 0) {
-            this.saveCurrentTime();
+            this.movieConfig.currentTime = this.currentTime;
         }
     };
 
@@ -196,16 +245,9 @@ class PlayerData {
     pause() {
         this.element.pause();
         this.state = PlayerState.STOPPED;
-        this.saveCurrentTime();
+        this.movieConfig.currentTime = this.currentTime;
     }
 
-    loadCurrentTime() {
-        return readLocalStorage(this.uniqueId + '_time') || 0;
-    }
-
-    saveCurrentTime() {
-        return saveLocalStorage(this.uniqueId + '_time', this.currentTime);
-    }
 
     playPause() {
         if (this.state === PlayerState.PLAYING) {
@@ -258,12 +300,15 @@ interface SubSplit {
 export interface SubsProps {
     mergedSubs: MergedSub[];
     playerData: PlayerData;
+    movieConfig: MovieConfig;
 }
 
 
 @observer
 export class Subs extends React.Component<SubsProps, {}> {
-    @computed get selectedSubIdx() {
+
+    @computed
+    get selectedSubIdx() {
         const {mergedSubs, playerData: {currentTime}} = this.props;
         for (let i = 0; i < mergedSubs.length; i++) {
             const sub = mergedSubs[i];
@@ -323,7 +368,8 @@ export class Subs extends React.Component<SubsProps, {}> {
     };
 
 
-    @computed get pageProgress() {
+    @computed
+    get pageProgress() {
         const {playerData: {currentTime}} = this.props;
         const page = this.pages[this.currentPageIdx];
         if (!page) {
@@ -399,50 +445,107 @@ export class Subs extends React.Component<SubsProps, {}> {
     @observable showRuSubs = true;
     @observable showSubs = true;
 
+    getCurrentSubIdx() {
+        let subIdx = this.selectedSubIdx;
+        const maxTimeAfterLastSub = 2;
+        if (subIdx === -1) {
+            const {mergedSubs, playerData: {currentTime}} = this.props;
+            for (let i = 0; i < mergedSubs.length; i++) {
+                const sub = mergedSubs[i];
+                if (sub.start <= currentTime && sub.end + maxTimeAfterLastSub >= currentTime) {
+                    subIdx = i;
+                    break;
+                }
+            }
+        }
+        return subIdx;
+    }
+
+    setHeroToCurrentSub(heroNum: number) {
+        const {mergedSubs, movieConfig} = this.props;
+        const idx = this.getCurrentSubIdx();
+        if (idx > -1) {
+            const configSub = movieConfig.subs.get(idx + '');
+            if (configSub) {
+                if (configSub.hero === heroNum) {
+                    configSub.hero = null;
+                } else {
+                    configSub.hero = heroNum;
+                }
+            } else {
+                movieConfig.subs.set(idx + '', new MovieConfigSub({idx, hero: heroNum, newScene: false}));
+            }
+        }
+    }
+
+    setNewSceneBeforeCurrentSub() {
+        const {mergedSubs, movieConfig} = this.props;
+        const idx = this.getCurrentSubIdx();
+        if (idx > -1) {
+            const configSub = movieConfig.subs.get(idx + '');
+            if (configSub) {
+                configSub.newScene = !configSub.newScene;
+            } else {
+                movieConfig.subs.set(idx + '', new MovieConfigSub({idx, hero: null, newScene: true}));
+            }
+        }
+    }
+
     onKeyPress = (e: KeyboardEvent) => {
         const {mergedSubs, playerData} = this.props;
         const {currentTime} = playerData;
         let handled = false;
         const noMetaKey = !e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey;
-        switch (e.keyCode) {
-            case Key.SPACE: {
-                playerData.playPause();
-                handled = true;
-                break;
-            }
-            case Key.LEFT: {
-                const pos = mergedSubs.findIndex(sub => sub.start > currentTime || (sub.start <= currentTime && sub.end >= currentTime));
-                if (pos > 0) {
-                    playerData.seek(mergedSubs[pos - 1].start);
+        if (noMetaKey) {
+            let handled = true;
+            switch (e.keyCode) {
+                case Key.SPACE:
+                    playerData.playPause();
+                    break;
+                case Key.LEFT: {
+                    const pos = mergedSubs.findIndex(sub => sub.start > currentTime || (sub.start <= currentTime && sub.end >= currentTime));
+                    if (pos > 0) {
+                        playerData.seek(mergedSubs[pos - 1].start);
+                    }
+                    break;
                 }
-                handled = true;
-                break;
-            }
-            case Key.RIGHT: {
-                const pos = mergedSubs.findIndex(sub => sub.start > currentTime);
-                if (pos < mergedSubs.length) {
-                    playerData.seek(mergedSubs[pos].start);
+                case Key.RIGHT: {
+                    const pos = mergedSubs.findIndex(sub => sub.start > currentTime);
+                    if (pos < mergedSubs.length) {
+                        playerData.seek(mergedSubs[pos].start);
+                    }
+                    break;
                 }
-                handled = true;
-                break;
-            }
-            case Key.R: {
-                if (noMetaKey) {
+                case Key.R:
                     this.showRuSubs = !this.showRuSubs;
-                    handled = true;
-                }
-                break;
-            }
-            case Key.S: {
-                if (noMetaKey) {
+                    break;
+                case Key.S:
                     this.showSubs = !this.showSubs;
-                    handled = true;
-                }
-                break;
+                    break;
+
+                case Key.ENTER:
+                    this.setNewSceneBeforeCurrentSub();
+                    break;
+                case Key.Z:
+                    this.setHeroToCurrentSub(1);
+                    break;
+                case Key.X:
+                    this.setHeroToCurrentSub(2);
+                    break;
+                case Key.C:
+                    this.setHeroToCurrentSub(3);
+                    break;
+                case Key.V:
+                    this.setHeroToCurrentSub(4);
+                    break;
+
+                default:
+                    handled = false;
+
             }
-        }
-        if (handled) {
-            e.preventDefault();
+            if (handled) {
+                e.preventDefault();
+            }
         }
     };
 
@@ -456,12 +559,20 @@ export class Subs extends React.Component<SubsProps, {}> {
     }
 
     render() {
-        const {mergedSubs, playerData} = this.props;
+        const {mergedSubs, playerData, movieConfig, playerData: {state}} = this.props;
+        const isPaused = state === PlayerState.STOPPED;
         return (
-            <div className={`subs ${this.showSubs ? '' : 'subs--hidden'} ${this.showRuSubs ? '' : 'subs--ru-hidden'}`} ref="root">
+            <div
+                className={`subs ${this.showSubs ? '' : 'subs--hidden'} ${this.showRuSubs ? '' : 'subs--ru-hidden'} ${isPaused ? 'subs--paused' : ''}`}
+                ref="root">
                 <div className="subs__wrapper">
                     {mergedSubs.map((sub, i) =>
-                        <Sub key={i} top={this.getDistance(i)} sub={sub} playerData={playerData}
+                        <Sub key={i}
+                             subIdx={i}
+                             movieConfig={movieConfig}
+                             top={this.getDistance(i)}
+                             sub={sub}
+                             playerData={playerData}
                              selected={this.selectedSubIdx === i}/>
                     )}
                 </div>
@@ -472,14 +583,17 @@ export class Subs extends React.Component<SubsProps, {}> {
             </div>
         );
     }
+
 }
 
 
 export interface SubProps {
     sub: MergedSub;
+    subIdx: number;
     playerData: PlayerData;
     selected: boolean;
     top: number;
+    movieConfig: MovieConfig;
 }
 
 @observer
@@ -490,10 +604,13 @@ export class Sub extends React.Component<SubProps, {}> {
     };
 
     render() {
-        const {sub, top, selected} = this.props;
+        const {sub, top, selected, movieConfig, subIdx} = this.props;
+        const configSub = movieConfig.subs.get(subIdx + '');
+        const heroClass = (configSub && typeof configSub.hero === 'number') ? `sub--hero sub--hero${configSub.hero}` : '';
+        const newSceneClass = (configSub && configSub.newScene) ? `sub--new-scene` : '';
         return (
             <div onClick={this.playSub} data-start-time={sub.start} data-end-time={sub.end} style={{marginTop: top}}
-                 className={`sub ${selected ? 'sub--selected' : ''}`}>
+                 className={`sub ${selected ? 'sub--selected' : ''} ${heroClass} ${newSceneClass}`}>
                 <div className="sub__en">{sub.text}</div>
                 <div className="sub__ru">{sub.ruText}</div>
             </div>

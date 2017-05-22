@@ -1,14 +1,15 @@
+
 export interface Sub {
     start: number;
     end: number;
     text: string;
 }
-export interface MergedSub {
+export class MergedSub {
     start: number;
     end: number;
     text: string;
-    ruText: string;
-    ruSubs: Sub[];
+    ruText = '';
+    ruSubs: Sub[] = [];
 }
 export function parseSubs(srt: string) {
     const re = /(?:\d+\s+)?(\d+):(\d+):(\d+)[.,](\d+) --> (\d+):(\d+):(\d+)[,.](\d+)\s+([\s\S]*?)(?=\r?\n\r?\n\d+|\s*$)/g;
@@ -99,15 +100,16 @@ function middle(sub: Sub) {
     return sub.start + (sub.end - sub.start) / 2;
 }
 
+
 export function mergeSubs(en: Sub[], ru: Sub[], ruShift = 0) {
     let j = 0;
-    const resultSub: MergedSub[] = en.map(sub => ({
-        start: sub.start,
-        end: sub.end,
-        text: sub.text,
-        ruText: '',
-        ruSubs: []
-    }));
+    const resultSub: MergedSub[] = en.map(sub => {
+        const msub = new MergedSub();
+        msub.start = sub.start;
+        msub.end = sub.end;
+        msub.text = sub.text;
+        return msub;
+    });
 
     const max = 2;
 
