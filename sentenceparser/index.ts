@@ -75,7 +75,9 @@ It is very wrong to catch giraffes and put them in cages or houses.
 Then I am not thinking anymore.
 I am sleeping.
 `;
-const words = parseSentence(s1);
+
+const s2 = `There was nothing going on but pleasure parties, hunting, fishing, dancing, mirth, and feasting. Nobody went to bed, but all passed the night in playing pranks on each other. In short, everything succeeded so well that the youngest daughter began to think that the beard of the master of the house was not so very blue, and that he was a very civil gentleman. So as soon as they returned home, the marriage was concluded.`;
+const words = parseSentence(s2);
 
 for (let i = 0; i < words.length - 1; i++) {
     const word = words[i];
@@ -103,7 +105,14 @@ for (let i = 0; i < words.length - 1; i++) {
         word.mergedWithNext = true;
     }
 
+    if (word.speechPart === Type.ExistentialThere) {
+        word.mergedWithNext = true;
+    }
+
     if (word.speechPart === Type.Noun && word.nextWord.speechPart === Type.Verb) {
+        word.mergedWithNext = true;
+    }
+    if (word.speechPart === Type.Noun && word.nextWord.speechPart === Type.Noun) {
         word.mergedWithNext = true;
     }
     if (word.speechPart === Type.Noun && word.nextWord.speechPart === Type.Adjective) {
@@ -113,7 +122,7 @@ for (let i = 0; i < words.length - 1; i++) {
         word.mergedWithNext = true;
     }
     // if (word.speechPart === Type.Verb && word.nextWord.speechPart === Type.Preposition) {
-        // word.mergedWithNext = true;
+    // word.mergedWithNext = true;
     // }
     if (word.speechPart === Type.Verb && word.nextWord.speechPart === Type.Noun) {
         word.mergedWithNext = true;
@@ -122,6 +131,9 @@ for (let i = 0; i < words.length - 1; i++) {
         word.mergedWithNext = true;
     }
     if (word.speechPart === Type.Verb && word.nextWord.speechPart === Type.Adjective) {
+        word.mergedWithNext = true;
+    }
+    if (word.speechPart === Type.VerbIng && word.nextWord.speechPart === Type.Preposition) {
         word.mergedWithNext = true;
     }
     if (word.speechPart === Type.Adverb) {
@@ -154,7 +166,7 @@ function print(words: Word[]) {
         if (word.speechPart !== Type.Symbol) {
             s += ' ';
         }
-        s += word.word;
+        s += word.word + '/'+word.tag;
         if (word.mergedWithNext === false && word.nextWord && word.nextWord.speechPart !== Type.Symbol) {
             s += '     ';
         }
