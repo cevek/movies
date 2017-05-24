@@ -6,6 +6,7 @@ import {Movie} from './Movie';
 import {Router, BrowserHistory, Route, RouterView} from 'router';
 import {Phrases} from './Phrases';
 import {Game} from './Game';
+import {AudioGame} from './AudioGame';
 
 export namespace routes {
     export const index = new Route('/', App);
@@ -13,6 +14,7 @@ export namespace routes {
     export const movie = index.addChild('movie/:id', Movie as any);
     export const phrases = index.addChild('phrases/:id', Phrases as any);
     export const game = index.addChild('game', Game as any);
+    export const audiogame = index.addChild('audiogame', AudioGame as any);
 }
 
 const history = new BrowserHistory();
