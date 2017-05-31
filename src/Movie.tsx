@@ -15,7 +15,7 @@ export interface MovieProps extends RouteProps {
     };
 }
 
-const enum Key {
+export const enum Key {
     ENTER = 13,
     UP = 38,
     DOWN = 40,
@@ -26,6 +26,7 @@ const enum Key {
     E = 69,
     S = 83,
 
+    F = 102,
     V = 86,
     C = 67,
     X = 88,
@@ -68,6 +69,7 @@ class MovieConfig {
     @observable showSubs = true;
     @observable showRuSubs = true;
     @observable subs = observable.map<MovieConfigSub>();
+    @observable favouritesPhrases: string[] = [];
 
     constructor(props: MovieConfig | null) {
         if (!props) props = {} as MovieConfig;
@@ -75,6 +77,7 @@ class MovieConfig {
         this.ruShift = props.ruShift || 0;
         this.showSubs = typeof props.showSubs === 'boolean' ? props.showSubs : true;
         this.showRuSubs = typeof props.showRuSubs === 'boolean' ? props.showRuSubs : true;
+        this.favouritesPhrases = props.favouritesPhrases || [];
         for (const idx in props.subs) {
             this.subs.set(idx, new MovieConfigSub((props.subs as any)[idx]));
         }
@@ -499,7 +502,7 @@ export class Subs extends React.Component<SubsProps, {}> {
     }
 
     onKeyPress = (e: KeyboardEvent) => {
-        const {mergedSubs, playerData} = this.props;
+        const {mergedSubs, playerData, movieConfig} = this.props;
         const {currentTime} = playerData;
         let handled = false;
         const noMetaKey = !e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey;
@@ -528,6 +531,16 @@ export class Subs extends React.Component<SubsProps, {}> {
                     break;
                 case Key.S:
                     this.showSubs = !this.showSubs;
+                    break;
+
+                case Key.F:
+                    const pos = this.getCurrentSubIdx();
+                    if (pos > -1) {
+                        const phrase = prompt('Add favourite phrase', mergedSubs[pos].text.replace(/\n/g, ' '));
+                        if (phrase) {
+                            movieConfig.favouritesPhrases.push(phrase);
+                        }
+                    }
                     break;
 
                 case Key.ENTER:

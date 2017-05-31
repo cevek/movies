@@ -71,6 +71,7 @@ function countVowels(s: string) {
     while(r.test(s)) count++;
     return count;
 }
+
 export function splitNewLines(subs: Sub[]) {
     const newSubs:Sub[] = [];
     for (let i = 0; i < subs.length; i++) {
