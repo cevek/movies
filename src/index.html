@@ -96,7 +96,7 @@
         }
 
         .sub {
-            width: 500px;
+            width: 800px;
             padding: 11px;
             margin: 0 auto;
             color: white;
@@ -208,8 +208,6 @@
             margin-bottom: 200px;
         }
 
-
-
         .audiogame {
             margin: 100px;
             max-width: 700px;
@@ -218,15 +216,55 @@
 
         .audiogame__word {
             display: inline-block;
-            margin: 3px;
+            margin: 5px 3px;
             border: 0 solid gray;
+            border-bottom: 2px solid transparent;
+
         }
 
         .audiogame__word--selected {
             color: #0d8eb7;
         }
 
+        .sync-subs {
 
+        }
+
+        .sync-subs__sub {
+            position: absolute;
+            border: 1px solid black;
+            background: rgba(0, 0, 0, .3);
+            padding: 3px 10px;
+            box-sizing: border-box;
+            width: 500px;
+            font-size: 12px;
+        }
+
+        .sync-subs__en-sub {
+            text-align: right;
+            left: 50%;
+            margin-left: -500px;
+        }
+
+        .sync-subs__ru-sub {
+            text-align: left;
+            left: 50%;
+        }
+
+        .sync-subs__selected-sub1 {
+            background: rgba(222, 224, 34, .3);
+        }
+        .sync-subs__selected-sub2 {
+            background: rgba(24, 224, 255, .3);
+        }
+        .sync-subs__sync {
+            position: fixed;
+        }
+        .sync-subs__textarea{
+            margin: 20px;
+            width: 500px;
+            height: 200px;
+        }
     </style>
     <%-css%>
 </head>
