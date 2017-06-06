@@ -23,6 +23,7 @@
     "react": "^15.5.4",
     "react-dom": "^15.5.4",
     "sound-utils": "https://github.com/cevek/sound",
+    "router": "https://github.com/cevek/router.git",
     "webbuilder": "^1.0.26"
   }
 }
