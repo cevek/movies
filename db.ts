@@ -1,11 +1,9 @@
+import {readFileSync} from 'fs';
+
 const mysql = require('mysql');
 
-const connection = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'voriginale'
-});
+const config = JSON.parse(readFileSync(__dirname + '/config/' + (process.env.NODE_ENV || 'development') + '.json', 'utf8'));
+const connection = mysql.createConnection(config);
 connection.connect();
 
 export function query<T>(sql: string, args?: (number | boolean | string | Date | null)[]) {

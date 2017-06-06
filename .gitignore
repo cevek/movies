@@ -1,3 +1,5 @@
 node_modules
 parser/cache
 dist
+config/*.json
+*.js
