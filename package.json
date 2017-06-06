@@ -24,7 +24,7 @@
     "react": "^15.5.4",
     "react-dom": "^15.5.4",
     "router": "https://github.com/cevek/router.git",
-    "sound-utils": "https://github.com/cevek/sound",
+    "sound-utils": "https://github.com/cevek/sound-utils.git",
     "typescript": "^2.3.4",
     "webbuilder": "^1.0.26"
   }
