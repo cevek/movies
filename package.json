@@ -22,8 +22,9 @@
     "pos": "^0.4.2",
     "react": "^15.5.4",
     "react-dom": "^15.5.4",
-    "sound-utils": "https://github.com/cevek/sound",
     "router": "https://github.com/cevek/router.git",
+    "sound-utils": "https://github.com/cevek/sound",
+    "typescript": "^2.3.4",
     "webbuilder": "^1.0.26"
   }
 }
